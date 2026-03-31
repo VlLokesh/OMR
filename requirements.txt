@@ -1,7 +1,5 @@
 Flask
 numpy
-opencv-python
-paddleocr
-paddlepaddle
+opencv-python-headless
+pytesseract
 reportlab
-Werkzeug

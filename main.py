@@ -12,6 +12,17 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from werkzeug.utils import secure_filename
 
+
+def _init_tesseract() -> None:
+    path = os.environ.get("TESSERACT_CMD")
+    if path:
+        try:
+            import pytesseract
+
+            pytesseract.pytesseract.tesseract_cmd = path
+        except Exception:
+            pass
+
 UPLOAD_DIR = "uploads"
 PDF_DIR = "generated_pdfs"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
@@ -34,6 +45,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(PDF_DIR, exist_ok=True)
 
 ocr_engine: Optional[Any] = None
+_init_tesseract()
 
 def allowed_file(filename: str) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -41,9 +53,7 @@ def allowed_file(filename: str) -> bool:
 def get_ocr_engine():
     global ocr_engine
     if ocr_engine is None:
-        from paddleocr import PaddleOCR
-
-        ocr_engine = PaddleOCR(use_angle_cls=True, lang="en", show_log=False)
+        ocr_engine = "tesseract"
     return ocr_engine
 
 def order_points(points: np.ndarray) -> np.ndarray:
@@ -329,7 +339,7 @@ def extract_text_fields(
     if not regions:
         return {}
 
-    engine = get_ocr_engine()
+    get_ocr_engine()
     extracted: Dict[str, str] = {}
     for field_name, box in regions.items():
         x, y, w, h = map(int, box)
@@ -338,14 +348,9 @@ def extract_text_fields(
             extracted[field_name] = ""
             continue
         try:
-            rgb_roi = cv2.cvtColor(roi, cv2.COLOR_GRAY2RGB)
-            result = engine.ocr(rgb_roi, cls=True)
-            lines: List[str] = []
-            for page in result or []:
-                for item in page or []:
-                    if item and len(item) > 1 and item[1]:
-                        lines.append(item[1][0])
-            text = " ".join(lines).strip()
+            import pytesseract
+
+            text = pytesseract.image_to_string(roi, config="--psm 6")
         except Exception:
             text = ""
         extracted[field_name] = " ".join(text.split())
