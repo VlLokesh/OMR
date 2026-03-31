@@ -1,7 +1,7 @@
-Flask>=3.0.0
-numpy>=1.26.0
-opencv-python>=4.9.0
-paddleocr>=2.8.1
-paddlepaddle>=2.6.1
-reportlab>=4.1.0
-Werkzeug>=3.0.0
+Flask
+numpy
+opencv-python
+paddleocr
+paddlepaddle
+reportlab
+Werkzeug
