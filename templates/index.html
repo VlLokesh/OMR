@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>School OMR Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style data-purpose="custom-styles">
+    body {
+      background-color: #f4f5f7;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .dashed-border {
+      border: 3px dashed #eab308;
+    }
+
+    .primary-btn {
+      background-color: #eab308;
+      transition: background-color 0.3s ease;
+    }
+
+    .primary-btn:hover {
+      background-color: #ca8a04;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex flex-col items-center pt-0 pb-10">
+<!-- BEGIN: Header Section -->
+<header class="w-full bg-[#112240] text-white py-6 px-6 flex items-center shadow-md relative" data-purpose="main-header">
+<div class="absolute left-6 flex items-center gap-4">
+<!-- Placeholder for School Logo -->
+<div class="w-12 h-12 bg-transparent border border-[#eab308] rounded flex items-center justify-center text-xs font-bold text-[#eab308] overflow-hidden">
+        Logo
+      </div>
+</div>
+<h1 class="text-2xl sm:text-3xl font-semibold tracking-wide text-center w-full">School OMR Portal</h1>
+</header>
+<!-- END: Header Section -->
+<!-- BEGIN: Main Content Area -->
+<main class="w-full max-w-3xl mt-10 px-4 sm:px-6 md:px-8 flex-grow" data-purpose="main-content">
+<!-- Upload Container -->
+<div class="bg-white rounded-lg shadow-xl overflow-hidden" data-purpose="upload-card">
+<!-- Drag & Drop Zone -->
+<form id="omr-form" class="m-0" enctype="multipart/form-data">
+<input id="file-input" name="file" type="file" accept=".png,.jpg,.jpeg" class="hidden"/>
+<div id="dropzone" class="bg-[#112240] p-10 sm:p-14 dashed-border m-4 sm:m-6 sm:mb-4 mb-4 rounded-md text-center cursor-pointer hover:bg-[#1a335c] transition-colors duration-300" data-purpose="dropzone">
+<!-- Icon Placeholder (Camera/Image) -->
+<div class="mb-6 flex justify-center">
+<svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<h2 class="text-white text-lg sm:text-xl font-medium mb-2">Drag and drop OMR sheet here, or click to browse</h2>
+<p class="text-gray-300 text-sm">Supports JPG, PNG (Max 10MB)</p>
+</div>
+<!-- Action Area -->
+<div class="px-4 sm:px-6 pb-6 sm:pb-8 pt-0 flex flex-col gap-4 justify-center bg-white" data-purpose="action-area">
+<button id="submit-btn" type="submit" class="primary-btn text-white font-bold py-3 px-12 rounded-full text-xl shadow-md w-full focus:outline-none focus:ring-4 focus:ring-yellow-300">
+          Extract Answers
+        </button>
+<button id="download-btn" type="button" class="hidden primary-btn text-white font-bold py-3 px-12 rounded-full text-base shadow-md w-full focus:outline-none focus:ring-4 focus:ring-yellow-300">
+          Download PDF
+        </button>
+</div>
+</form>
+<div id="status" class="px-4 sm:px-6 pb-6 sm:pb-8 text-sm text-gray-600 text-center"></div>
+</div>
+</main>
+<!-- END: Main Content Area -->
+<script>
+  const form = document.getElementById("omr-form");
+  const dropzone = document.getElementById("dropzone");
+  const fileInput = document.getElementById("file-input");
+  const statusEl = document.getElementById("status");
+  const downloadBtn = document.getElementById("download-btn");
+  let downloadHref = "";
+  const submitBtn = document.getElementById("submit-btn");
+
+  function setStatus(message, isError) {
+    statusEl.textContent = message || "";
+    statusEl.className = "px-4 sm:px-6 pb-6 sm:pb-8 text-sm text-center " + (isError ? "text-red-600" : "text-gray-600");
+  }
+
+  function setDownload(link) {
+    if (link) {
+      downloadHref = link;
+      downloadBtn.classList.remove("hidden");
+    } else {
+      downloadHref = "";
+      downloadBtn.classList.add("hidden");
+    }
+  }
+
+  dropzone.addEventListener("click", () => fileInput.click());
+
+  dropzone.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    dropzone.classList.add("bg-[#1a335c]");
+  });
+
+  dropzone.addEventListener("dragleave", () => {
+    dropzone.classList.remove("bg-[#1a335c]");
+  });
+
+  dropzone.addEventListener("drop", (event) => {
+    event.preventDefault();
+    dropzone.classList.remove("bg-[#1a335c]");
+    if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+      fileInput.files = event.dataTransfer.files;
+      setStatus("File selected: " + event.dataTransfer.files[0].name);
+      setDownload("");
+    }
+  });
+
+  fileInput.addEventListener("change", () => {
+    if (fileInput.files.length > 0) {
+      setStatus("File selected: " + fileInput.files[0].name);
+      setDownload("");
+    }
+  });
+
+  downloadBtn.addEventListener("click", () => {
+    if (downloadHref) {
+      window.location.href = downloadHref;
+    }
+  });
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!fileInput.files.length) {
+      setStatus("Please select an OMR image first.", true);
+      return;
+    }
+
+    setStatus("Processing OMR. Please wait...");
+    setDownload("");
+    submitBtn.disabled = true;
+    submitBtn.classList.add("opacity-70");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      const response = await fetch("/upload", {
+        method: "POST",
+        body: formData
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || "Upload failed.");
+      }
+
+      setStatus("OMR processed. Click Download PDF to save.");
+      setDownload(payload.download_link);
+    } catch (error) {
+      setStatus(error.message || "Processing failed.", true);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.classList.remove("opacity-70");
+    }
+  });
+</script>
+</body></html>

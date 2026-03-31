@@ -1,0 +1,102 @@
+You are an expert computer vision engineer building an Optical Mark Recognition (OMR) system using Python, OpenCV, NumPy, Tesseract OCR, and Flask.
+
+Your task is to create a complete end-to-end pipeline with the following requirements:
+
+1. INPUT
+
+* Accept an uploaded image (JPG/PNG) via a Flask API endpoint.
+* The image contains an OMR answer sheet with multiple-choice questions.
+
+2. PREPROCESSING
+
+* Convert image to grayscale.
+* Apply Gaussian blur to remove noise.
+* Apply adaptive or Otsu thresholding to convert to binary.
+* Detect edges and find the largest contour representing the sheet.
+* Perform perspective transform to get a top-down aligned view.
+
+3. OMR DETECTION
+
+* Detect bubble regions either:
+  a) Using predefined coordinates (preferred for accuracy), OR
+  b) Using contour detection and filtering circular shapes.
+* Group bubbles per question (e.g., 4 options per question: A, B, C, D).
+
+4. MARK RECOGNITION
+
+* For each bubble:
+
+  * Extract ROI.
+  * Count non-zero pixels.
+  * Determine if filled based on threshold.
+* For each question:
+
+  * Select the option with maximum filled pixels.
+  * Handle edge cases:
+
+    * Multiple marked → mark as INVALID
+    * No mark → mark as BLANK
+
+5. OPTIONAL OCR (Tesseract)
+
+* Extract additional fields like:
+
+  * Roll number
+  * Name
+* Use pytesseract for text extraction from defined regions.
+
+6. OUTPUT FORMAT
+
+* Return results in structured JSON:
+  {
+  "Q1": "A",
+  "Q2": "C",
+  "Q3": "INVALID",
+  "Q4": "BLANK"
+  }
+
+7. PDF GENERATION
+
+* Generate a downloadable PDF containing:
+
+  * Title: "OMR Result"
+  * Extracted answers in format:
+    Q1. A
+    Q2. C
+* Use reportlab or similar library.
+* Provide a download link via Flask endpoint.
+
+8. FLASK API ENDPOINTS
+
+* POST /upload
+
+  * Accept image file
+  * Process OMR
+  * Return JSON response + PDF download link
+
+* GET /download/<file>
+
+  * Serve generated PDF
+
+9. CODE REQUIREMENTS
+
+* Use:
+
+  * OpenCV (cv2)
+  * NumPy
+  * pytesseract
+  * Flask
+* Write clean modular functions:
+
+  * preprocess_image()
+  * detect_sheet()
+  * extract_bubbles()
+  * evaluate_answers()
+  * generate_pdf()
+
+10. OUTPUT EXAMPLE
+    Q1. A
+    Q2. C
+    in Ten in one column
+
+Ensure the code is complete, runnable, and production-ready with proper error handling.
